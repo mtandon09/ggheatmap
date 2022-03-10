@@ -215,6 +215,17 @@ ggheatmap <- function(data,
 ){
   gene=NULL
   cluster=NULL
+  color_func <- scale_fill_gradientn(colours = color)
+  if (! is.numeric(as.matrix(data))) {
+    scale="off"
+    cluster_rows=F
+    cluster_cols=F
+    
+    if (is.null(names(color))) {
+      names(color) <- unique(as.vector(oncomat))
+    }
+    color_func <- scale_fill_manual(values = color, drop=T)
+  }
   #step1.scale data
   if(scale=="column"){
     scale_df <- scale(data)
@@ -227,6 +238,12 @@ ggheatmap <- function(data,
   dat <- as.data.frame(scale_df)%>%
     rownames_to_column(var = "gene")%>%
     tidyr::gather(key = "cluster",value = "expression",-gene)
+  # browser()
+  # roworder <- rownames(scale_df)
+  # dat$gene <- factor(dat$gene,levels = roworder)
+  # colorder <- colnames(scale_df)
+  # dat$expression <- factor(dat$expression,levels = roworder)
+  # 
   if(cluster_rows){
     row_clust <- hclust(dist(as.matrix(scale_df),method = dist_method),method = hclust_method)
     roworder <- row_clust$labels[row_clust$order]
@@ -303,7 +320,8 @@ ggheatmap <- function(data,
   if(is.null(shape)){
     p <- ggplot(dat, aes(cluster, gene, fill= expression)) +
       geom_tile(colour=border) +
-      scale_fill_gradientn(colours = color)+
+      # scale_fill_gradientn(colours = color)+
+      color_func +
       scale_y_discrete(position = text_position_rows,breaks=text_rows)+
       scale_x_discrete(position = text_position_cols,breaks=text_cols)+
       theme(axis.title.x = element_blank(),
